@@ -7,7 +7,7 @@
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
-from lib_nrf24 import NRF24
+from lib_nrf24.lib_nrf24 import NRF24
 import file_to_bytes
 import time
 import spidev
@@ -98,6 +98,7 @@ while currentPacket < num_packets:
 
     retransmit = True
     # send a packet to receiver until ack is received
+    i=0
     while retransmit:
         # Send packet
         radio.write(buf)
@@ -114,7 +115,10 @@ while currentPacket < num_packets:
             # If the received ack corresponds to the sent packet, pass to next one
             if ack_id == currentPacket:
                 retransmit = False
-        time.sleep(0.05)
+        #time.sleep(0.05)
+        time.sleep(1)
+        i = i+1
+        print(i)
 
     currentPacket = currentPacket + 1
 

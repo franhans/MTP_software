@@ -6,7 +6,7 @@
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
-from lib_nrf24 import NRF24
+from lib_nrf24.lib_nrf24 import NRF24
 import time
 import spidev
 import os
@@ -32,6 +32,7 @@ radio2.openReadingPipe(1, pipes[1])
 
 radio2.startListening()
 radio2.stopListening()
+
 
 radio2.printDetails()
 
@@ -73,6 +74,7 @@ try:
         # Get current length of data array
         l = len(data)
 
+
         # Check if current data buffer is large enough to store the received data
         if l < n*payloadSize + size:
             # If not, append 0 until it's large enough to store the received data
@@ -90,6 +92,7 @@ try:
             file.write(bytearray(data))
             file.close()
             break
+        
 except KeyboardInterrupt:
     # If the program is interrupted, write received data into file and exit
     file = open("partial_received.txt", mode="wb")

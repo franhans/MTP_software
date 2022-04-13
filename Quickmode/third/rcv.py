@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 import RPi.GPIO as GPIO
-from RF24 import *
+from libraries.lib_nrf24 import RF24
 import time
 import spidev
 
