@@ -15,7 +15,7 @@ import os
 pipes = [[0xe7, 0xe7, 0xe7, 0xe7, 0xe7], [0xc2, 0xc2, 0xc2, 0xc2, 0xc2]]
 
 radio2 = NRF24(GPIO, spidev.SpiDev())
-radio2.begin(0, 25)
+radio2.begin(0, 17)
 
 radio2.setRetries(15,15)
 
@@ -54,6 +54,7 @@ try:
         while not radio2.available(pipe):
             time.sleep(10000/1000000.0)
 
+        print('recived')
         recv_buffer = []
         radio2.read(recv_buffer, 32)
 

@@ -31,7 +31,7 @@ pipes = [[0xe7, 0xe7, 0xe7, 0xe7, 0xe7], [0xc2, 0xc2, 0xc2, 0xc2, 0xc2]]
 # SPI initialization
 radio = NRF24(GPIO, spidev.SpiDev())
 # Initialization SPI chip select of pin 25
-radio.begin(0, 25)
+radio.begin(0, 17)
 time.sleep(1)
 radio.setRetries(15,15)
 radio.setPayloadSize(32)
@@ -98,7 +98,6 @@ while currentPacket < num_packets:
 
     retransmit = True
     # send a packet to receiver until ack is received
-    i=0
     while retransmit:
         # Send packet
         radio.write(buf)
@@ -115,10 +114,7 @@ while currentPacket < num_packets:
             # If the received ack corresponds to the sent packet, pass to next one
             if ack_id == currentPacket:
                 retransmit = False
-        #time.sleep(0.05)
-        time.sleep(1)
-        i = i+1
-        print(i)
+        time.sleep(0.05)
 
     currentPacket = currentPacket + 1
 

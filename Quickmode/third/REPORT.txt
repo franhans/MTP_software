@@ -1,1 +1,0 @@
-The library that it uses for controlling the tx/rx module is from other repo and it appears to be in c++
