@@ -50,7 +50,7 @@ data = []
 try:
     while True:
         pipe = [0]
-        while not radio2.available():
+        while not radio2.available(pipe):
             time.sleep(10000/1000000.0)
 
         print('recived')
@@ -58,23 +58,24 @@ try:
         radio2.read(recv_buffer, 32)
 
         # Get the id of the packed, which corresponds to bytes 1 to 4
-        packet_id = [recv_buffer[1]]
+        packet_id = recv_buffer[1]
         # return the id of the received packet as ack
-        id_byte = bytearray(1)
-        id_byte[0] = 0xFF & packet_id
-        radio.stopListening()
-        radio.write(id_byte)
-        time.sleep(sleep_time)
-        radio.startListening()
-        print('---------------------------- ACK Sent: ', id_received)
+        #id_byte = bytearray(32)
+        id_byte = [int(0xFF & packet_id)]
+        print("packet_id: ", packet_id)
+        for i in range(31):
+            id_byte.append(int(0xFF & packet_id))
+        print("id_byte :", id_byte)
+        radio2.stopListening()
+        radio2.write(id_byte)
+        time.sleep(10000/1000000.0)
+        radio2.startListening()
 
         # Obtain the value of the id by weighting and adding the differt bytes
 
-        if packet_id == id_expected
-            id_expected = (id_expected+1)%250
-            counter = counter+1
+        if packet_id == id_expected :
             # Get the size of the data in the payload
-            size = recv_buffer[5]
+            size = recv_buffer[2]
 
             # If first byte is 0x55 it means it's the last packet
             last = True if (recv_buffer[0] == 0x55) else False
@@ -86,13 +87,15 @@ try:
             # Check if current data buffer is large enough to store the received data
             if l < counter*payloadSize + size:
                 # If not, append 0 until it's large enough to store the received data
-                for i in range(n*payloadSize + size - l):
+                for i in range(counter*payloadSize + size - l):
                     data.append(0)
 
             # Get the received data and store it in the data buffer
+            print("Size:", size) 
+            print("recv_buffer:", recv_buffer) 
             for i in range(size):
-                r = recv_buffer[i + 6]
-                data[n*payloadSize + i] = r
+                r = recv_buffer[i + 3]
+                data[counter*payloadSize + i] = r
 
             # If the received packet is the last one, write the buffer to a file and exit
             if last:
@@ -100,6 +103,9 @@ try:
                 file.write(bytearray(data))
                 file.close()
                 break
+
+            id_expected = (id_expected+1)%250
+            counter = counter+1
 
 except KeyboardInterrupt:
     # If the program is interrupted, write received data into file and exit
