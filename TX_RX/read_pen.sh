@@ -3,6 +3,7 @@
 pen_path=/media/usb
 destination_path=.
 
-sudo mount /dev/sda1 /media/usb -o uid=pi,gid=pi
+pen_name=`ls -l /dev/disk/by-uuid/ | grep -o sda.*`
+sudo mount /dev/$pen_name /media/usb -o uid=pi,gid=pi
 cp $pen_path/$1 $destination_path/$1 
 sudo umount /media/usb
