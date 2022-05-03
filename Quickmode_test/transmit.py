@@ -6,7 +6,7 @@
 
 
 import RPi.GPIO as GPIO
-from lib_nrf24 import NRF24
+from lib_nrf24.lib_nrf24 import NRF24
 import time
 import spidev
 import math
@@ -57,6 +57,7 @@ while(True):
 file.close()
 
 size = len(data)
+print("Size ---->>>>>> ", size)
 
 initial_time = time.time()
 
@@ -92,27 +93,30 @@ while counter < num_packets:
 
     retransmit = True
     # send a packet to receiver until ack is received
+    print("Buffer ---->>>>>> ", buf)
     while retransmit:
+        print("Retransmitting...", buf)
         # Send packet
         radio.write(buf)
         # did it return with a payload?
         radio.startListening() # Escuchamos para recibir ACK
         t0 = time.time()
-        while(((time.time()-t0)<0.2):
-            if radio.available(pipe):
+        while((time.time()-t0)<0.2):
+            if radio.available(pipes[0]):
                 pl_buffer=[]
                 ack_size = radio.getDynamicPayloadSize()
                 if ack_size > 0: # Si lo que recibimos no es NULL -> es ACK
-                    pl_buffer = radio.read(ack_size)
-                    #print(pl_buffer)
+                    print("ack_size: ", ack_size)
+                    radio.read(pl_buffer, 32) 
+                    print("ACK_value: ", pl_buffer)
                     # Convert the received ack bytes into an integer corresponding to the id of the packet
                     ack_id = (0xFF & pl_buffer[0])
                     if ack_id == currentPacket:
                         retransmit = False
-                        radio.stopListening()
                         #print('---------------Received = Type')
                     print('------------------------ACK Received')
-                time.sleep(0.005)
+            time.sleep(0.005)
+        radio.stopListening()
 
     currentPacket = (currentPacket + 1)%250
     counter = counter + 1

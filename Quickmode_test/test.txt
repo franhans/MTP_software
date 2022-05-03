@@ -1,1 +1,6 @@
-Hello world
+Upon successful completion l2cache lookup returns a list of addr, way, tag, index, offset, valid bit, dirty bit and
+LRU bit.
+
+LRU bit.
+Upon successful completion l2cache lookup returns a list of addr, way, tag, index, offset, valid bit, dirty bit and
+Upon successful completion l2cache lookup returns a list of addr, way, tag, index, offset, valid bit, dirty bit and
