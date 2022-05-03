@@ -262,7 +262,7 @@ if GPIO.input(20): # If SW2 'ON' then module is TX
     GPIO.output(18,GPIO.HIGH)#module is RX
     print("RX")
     receive()
-    os.system('./read_pen.sh received.txt')
+    os.system('./write_pen.sh received.txt')
 
 else: # If SW2 'OFF' then module is RX
     GPIO.output(15,GPIO.HIGH)#module is TX
