@@ -6,19 +6,17 @@ import math
 import sys
 import os
 import RPi.GPIO as GPIO
-import os
+
 
 
 def transmit():
-    ##########################################################################
-    # Chip configuration
+
     pipes = [[0xe7, 0xe7, 0xe7, 0xe7, 0xe7], [0xc2, 0xc2, 0xc2, 0xc2, 0xc2]]
 
     # SPI initialization
-    radio = NRF24(GPIO, spidev.SpiDev())
-    # Initialization SPI chip select of pin 25
+    radio = NRF24(GPIO, spidev.SpiDev()) #SPI configuration
     radio.begin(0, 17)
-    time.sleep(1)
+    time.sleep(0.5)
     radio.setRetries(15,15)
     radio.setPayloadSize(32)
     radio.setChannel(0x60)
@@ -27,21 +25,22 @@ def transmit():
     radio.setPALevel(NRF24.PA_MIN)
     radio.setAutoAck(False)
     radio.enableAckPayload()
+    radio.enableDynamicPayloads()
 
     radio.openWritingPipe(pipes[1])
     radio.openReadingPipe(1, pipes[0])
     radio.printDetails()
-    ##########################################################################
 
-    print("\n\n\n\n")
+    print("Transceiver initialized")
 
+    # Start opening the file
     # Gets input file, if no fie has been specified, default file "test.txt" is used
     if len(sys.argv) > 1:
         filename = str(sys.argv[1])
     else:
         filename = "test.txt"
 
-    print("File to send: ", filename)
+    print("Name of the text file: ", filename)
 
     # Loads input file as an array of bytes
     file = open(filename, mode='rb', buffering=0)
@@ -54,74 +53,74 @@ def transmit():
     file.close()
 
     size = len(data)
-    print("Size ---->>>>>> ", size)
+    print("Size in bytes---->>>>>> ", size)
 
-    initial_time = time.time()
+    start_time = time.time()
 
-    payloadSize = 29
-    num_packets = math.ceil(size/payloadSize)
+    payload_length = 29
+    num_packets = math.ceil(size/payload_length)
     currentPacket = 0
     counter=0
+    timeout=0.1
 
-    # Packet transfer start
+    # Data transmission
     while counter < num_packets:
-        # Gets the size of the data to be sent
-        dataSize = min(payloadSize, size-currentPacket*payloadSize)
 
-        # If it's the last packet, send a different header
+        dataSize = min(payload_length, size-currentPacket*payload_length)
+
+        # Check if the packet is the last one
+        #packet = [int(0x00)] if (counter == (num_packets - 1)) else packet = [int(0xFF)]
         if counter == (num_packets - 1):
-            buf = [int(0x55)]
+            packet = [int(0x00)] #we are sending the last packet
+            print("Las packet sent")
         else:
-            buf = [int(0xFF)]
+            packet = [int(0xFF)] #the packet is not the last one
 
-        # Append the current packet number to the packet
-        buf.append(int(0xFF & (currentPacket)))
+        packet.append(int(0xFF & (currentPacket))) # Add the id of the packet
 
-        # Append the size of the payload to the packet
-        buf.append(int(dataSize))
+        packet.append(int(dataSize)) # Add the payload length
 
-        # Append actual payload to the packet
-        for i in range(payloadSize):
+        for i in range(payload_length): # Add the data in the payload
             # If data size is less than payload size, fill with 0
             if i < dataSize:
-                buf.append(int(data[currentPacket*payloadSize+i]))
+                packet.append(int(data[currentPacket*payload_length+i]))
             else:
-                buf.append(int(0))
+                packet.append(int(0))
 
+        # transmission of the packet and wait for the ACK
         retransmit = True
-        # send a packet to receiver until ack is received
-        print("Buffer ---->>>>>> ", buf)
+        print("Packet ---->>>>>> ", packet)
         while retransmit:
-            print("Retransmitting...", buf)
-            # Send packet
-            radio.write(buf)
-            # did it return with a payload?
-            radio.startListening() # Escuchamos para recibir ACK
+            print("Retransmitting...", packet)
+
+            radio.write(packet) # Send the packet
+
             t0 = time.time()
-            while((time.time()-t0)<0.2):
+            radio.startListening()
+            while((time.time()-t0)<timeout):
                 if radio.available(pipes[0]):
-                    pl_buffer=[]
-                    ack_size = radio.getDynamicPayloadSize()
-                    if ack_size > 0: # Si lo que recibimos no es NULL -> es ACK
+                    ack=[]
+                    ack_size = radio.getDynamicPayloadSize() #obtain the ACK length
+                    if ack_size > 0:
                         print("ack_size: ", ack_size)
-                        radio.read(pl_buffer, 32)
-                        print("ACK_value: ", pl_buffer)
-                        # Convert the received ack bytes into an integer corresponding to the id of the packet
-                        ack_id = (0xFF & pl_buffer[0])
+                        radio.read(ack, 1) #the ACK are always 32 bytes
+                        print("ACK_value: ", ack)
+                        ack_id = (0xFF & ack[0]) 
                         if ack_id == currentPacket:
                             retransmit = False
+                            break
                             #print('---------------Received = Type')
-                        print('------------------------ACK Received')
                 time.sleep(0.005)
             radio.stopListening()
+	    
 
         currentPacket = (currentPacket + 1)%250
         counter = counter + 1
 
-        if counter == num_packets:
-            break
+        #if counter == num_packets:
+        #    break
 
-    transfer_time = time.time() - initial_time
+    transfer_time = time.time() - start_time
     if transfer_time > 60:
         print("Total time:"),
         print(transfer_time/60),
@@ -133,7 +132,7 @@ def transmit():
 
 
 def receive():
-    
+
     pipes = [[0xe7, 0xe7, 0xe7, 0xe7, 0xe7], [0xc2, 0xc2, 0xc2, 0xc2, 0xc2]]
 
     radio2 = NRF24(GPIO, spidev.SpiDev())
@@ -152,80 +151,66 @@ def receive():
 
     radio2.startListening()
     radio2.stopListening()
-
     radio2.printDetails()
 
-    radio2.startListening()
-
-    # Packet is 32 bytes
-    #   byte 0: indicates if the received packet is the last one
-    #   byte 1-4: id of the packet
-    #   byte 5: size of the data
-    #   byte 6-31: data
-    # Payload is 26 bytes
-    payloadSize = 29
-    last_received=0
+    payload_length = 29
     id_expected=0
-    counter=0
+    counter=0 #number of received packets
+    last_packet = False
+    data = [] # Array to store the whole data
 
-    # Buffer to store received data
-    data = []
+
+    radio2.startListening()
     try:
-        while True:
-            pipe = [0]
-            while not radio2.available(pipe):
-                time.sleep(10000/1000000.0)
+        while (not last_packet):
+            #pipe = [0]
+            while not radio2.available():
+                time.sleep(0.001)
 
-            print('recived')
-            recv_buffer = []
-            radio2.read(recv_buffer, 32)
+            print('packet recived')
+            packet = []
+            radio2.read(packet, 32)
 
-            # Get the id of the packed, which corresponds to bytes 1 to 4
-            packet_id = recv_buffer[1]
-            # return the id of the received packet as ack
-            #id_byte = bytearray(32)
-            id_byte = [int(0xFF & packet_id)]
+            packet_id = packet[1]
             print("packet_id: ", packet_id)
-            for i in range(31):
-                id_byte.append(int(0xFF & packet_id))
-            print("id_byte :", id_byte)
+
+            #Generate the ACK
+            ack = bytearray(1)
+            ack[0] = int(0xFF & packet_id)
+            #for i in range(31):
+                #ack.append(int(0xFF & packet_id))
+            print("ACK :", ack)
             radio2.stopListening()
-            radio2.write(id_byte)
-            time.sleep(10000/1000000.0)
+            radio2.write(ack)
+            time.sleep(0.001)
             radio2.startListening()
 
-            # Obtain the value of the id by weighting and adding the differt bytes
+            if packet_id == id_expected : #check if tha packet is the one expected
 
-            if packet_id == id_expected :
-                # Get the size of the data in the payload
-                size = recv_buffer[2]
+                size = packet[2] # Get the size of the data in the payload
+                print("Size:", size)
 
-                # If first byte is 0x55 it means it's the last packet
-                last = True if (recv_buffer[0] == 0x55) else False
-
-                # Get current length of data array
+                last = True if (packet[0] == 0x00) else False # Check if the packet is the last one
+		
                 l = len(data)
 
-
                 # Check if current data buffer is large enough to store the received data
-                if l < counter*payloadSize + size:
+                if l < counter*payload_length + size:
                     # If not, append 0 until it's large enough to store the received data
-                    for i in range(counter*payloadSize + size - l):
+                    for i in range(counter*payload_length + size - l):
                         data.append(0)
 
                 # Get the received data and store it in the data buffer
-                print("Size:", size)
-                print("recv_buffer:", recv_buffer)
+                print("packet:", packet)
                 for i in range(size):
-                    r = recv_buffer[i + 3]
-                    data[counter*payloadSize + i] = r
+                    data[counter*payload_length + i] = packet[i + 3]
 
                 # If the received packet is the last one, write the buffer to a file and exit
                 if last:
                     file = open("received.txt", mode="wb")
                     file.write(bytearray(data))
                     file.close()
-                    break
+                    last_packet = True
 
                 id_expected = (id_expected+1)%250
                 counter = counter+1
@@ -237,7 +222,6 @@ def receive():
         file.close()
 
     GPIO.cleanup()
-
 
 GPIO.setmode(GPIO.BCM)
 
@@ -252,26 +236,24 @@ GPIO.output(15,GPIO.LOW)
 GPIO.output(18,GPIO.LOW)
 
 while GPIO.input(16) == True:
-    time.sleep(20)
+    time.sleep(0.1)
 
 GPIO.output(14,GPIO.HIGH)#system is ON
 print("ON")
 
-
 if GPIO.input(20): # If SW2 'ON' then module is TX
-    os.system('./write_pen.sh received.txt')
     GPIO.output(18,GPIO.HIGH)#module is RX
     print("RX")
     receive()
+    os.system('./write_pen.sh received.txt')
 
 else: # If SW2 'OFF' then module is RX
     GPIO.output(15,GPIO.HIGH)#module is TX
-    os.system('./read_pen.sh test.txt')
     print("TX")
+    os.system('./read_pen.sh test.txt')
     transmit()
  # If SW1 'OFF' system reset
 
 GPIO.output(14,GPIO.LOW)
 GPIO.output(15,GPIO.LOW)
 GPIO.output(18,GPIO.LOW)
-
