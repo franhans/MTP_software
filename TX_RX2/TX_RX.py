@@ -8,6 +8,15 @@ import os
 import RPi.GPIO as GPIO
 
 
+def progressBar(count, total):
+    bar_len = 60
+    filled_len = int(round(bar_len*count/float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = "=" * filled_len + "-" * (bar_len - filled_len)
+
+    sys.stdout.write("[%s] %s%s\r" % (bar, percents, '%'))
+    sys.stdout.flush()
 
 def transmit():
 
@@ -53,7 +62,7 @@ def transmit():
     file.close()
 
     size = len(data)
-    print("Size in bytes---->>>>>> ", size)
+    #print("Size in bytes---->>>>>> ", size)
 
     start_time = time.time()
 
@@ -72,7 +81,7 @@ def transmit():
         #packet = [int(0x00)] if (counter == (num_packets - 1)) else packet = [int(0xFF)]
         if counter == (num_packets - 1):
             packet = [int(0x00)] #we are sending the last packet
-            print("Las packet sent")
+            #print("Las packet sent")
         else:
             packet = [int(0xFF)] #the packet is not the last one
 
@@ -89,9 +98,9 @@ def transmit():
 
         # transmission of the packet and wait for the ACK
         retransmit = True
-        print("Packet ---->>>>>> ", packet)
+        #print("Packet ---->>>>>> ", packet)
         while retransmit:
-            print("Retransmitting...", packet)
+            #print("Retransmitting...", packet)
 
             radio.write(packet) # Send the packet
 
@@ -102,9 +111,9 @@ def transmit():
                     ack=[]
                     ack_size = radio.getDynamicPayloadSize() #obtain the ACK length
                     if ack_size > 0:
-                        print("ack_size: ", ack_size)
+                        #print("ack_size: ", ack_size)
                         radio.read(ack, 1) #the ACK are always 32 bytes
-                        print("ACK_value: ", ack)
+                        #print("ACK_value: ", ack)
                         ack_id = (0xFF & ack[0]) 
                         if ack_id == currentPacket:
                             retransmit = False
@@ -116,6 +125,7 @@ def transmit():
 
         currentPacket = (currentPacket + 1)%250
         counter = counter + 1
+        progressBar(counter, num_packets)
 
         #if counter == num_packets:
         #    break
@@ -167,7 +177,7 @@ def receive():
             while not radio2.available():
                 time.sleep(0.001)
 
-            print('packet recived')
+            #print('packet recived')
             packet = []
             radio2.read(packet, 32)
 
@@ -179,7 +189,7 @@ def receive():
             ack[0] = int(0xFF & packet_id)
             #for i in range(31):
                 #ack.append(int(0xFF & packet_id))
-            print("ACK :", ack)
+            #print("ACK :", ack)
             radio2.stopListening()
             radio2.write(ack)
             time.sleep(0.001)
@@ -188,7 +198,7 @@ def receive():
             if packet_id == id_expected : #check if tha packet is the one expected
 
                 size = packet[2] # Get the size of the data in the payload
-                print("Size:", size)
+                #print("Size:", size)
 
                 last = True if (packet[0] == 0x00) else False # Check if the packet is the last one
 		
@@ -201,7 +211,7 @@ def receive():
                         data.append(0)
 
                 # Get the received data and store it in the data buffer
-                print("packet:", packet)
+                #print("packet:", packet)
                 for i in range(size):
                     data[counter*payload_length + i] = packet[i + 3]
 
