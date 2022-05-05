@@ -32,8 +32,9 @@ def transmit():
     radio.setPayloadSize(32)
     radio.setChannel(0x60)
 
-    radio.setDataRate(NRF24.BR_2MBPS)
+    #radio.setDataRate(NRF24.BR_250KBPS)
     radio.setPALevel(NRF24.PA_HIGH)
+    radio.setDataRate(NRF24.BR_2MBPS)
     radio.setAutoAck(False)
     radio.enableAckPayload()
     radio.enableDynamicPayloads()
@@ -55,12 +56,9 @@ def transmit():
 
     print("Name of the text file: ", filename)
 
-    with open(filename, 'rb') as f_in:
-        with gzip.open('transmit.txt.gz', 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
 
     # Loads input file as an array of bytes
-    file = open('transmit.txt.gz', mode='rb', buffering=0)
+    file = open('test.txt', mode='rb', buffering=0)
     data = bytearray()
     while(True):
         d = file.read(32)
@@ -127,7 +125,7 @@ def transmit():
                             retransmit = False
                             break
                             #print('---------------Received = Type')
-                time.sleep(0.005)
+                time.sleep(0.0005)
             radio.stopListening()
 	    
 
@@ -158,8 +156,8 @@ def receive():
     radio2.setRetries(15,15)
     radio2.setPayloadSize(32)
     radio2.setChannel(0x60)
-    radio2.setDataRate(NRF24.BR_250KBPS)
-    radio2.setPALevel(NRF24.PA_MIN)
+    radio2.setDataRate(NRF24.BR_2MPS)
+    radio2.setPALevel(NRF24.PA_HIGH)
 
     radio2.setAutoAck(False)
     radio2.enableAckPayload()
@@ -183,7 +181,7 @@ def receive():
         while (not last_packet):
             #pipe = [0]
             while not radio2.available():
-                time.sleep(0.001)
+                time.sleep(0.0001)
 
             #print('packet recived')
             packet = []
@@ -195,12 +193,9 @@ def receive():
             #Generate the ACK
             ack = bytearray(1)
             ack[0] = int(0xFF & packet_id)
-            #for i in range(31):
-                #ack.append(int(0xFF & packet_id))
-            #print("ACK :", ack)
             radio2.stopListening()
             radio2.write(ack)
-            time.sleep(0.001)
+            time.sleep(0.0001)
             radio2.startListening()
 
             if packet_id == id_expected : #check if tha packet is the one expected
@@ -224,17 +219,10 @@ def receive():
                     data[counter*payload_length + i] = packet[i + 3]
 
                 # If the received packet is the last one, write the buffer to a file and exit
-                if last:
-                    file = open("received_compressed.txt", mode="wb")
+                if last or GPIO.input(16):
+                    file = open("received.txt", mode="wb")
                     file.write(bytearray(data))
                     file.close()
-                    #Decompress
-                    with gzip.open('received_compressed.txt', 'rb') as f:
-                        uncompressed_sentences = f.read()
-
-                    uncompressedFile = open('received.txt', 'wb') 
-                    uncompressedFile.write(uncompressed_sentences)
-
                     last_packet = True
 
                 id_expected = (id_expected+1)%250
@@ -242,7 +230,7 @@ def receive():
 
     except KeyboardInterrupt:
         # If the program is interrupted, write received data into file and exit
-        file = open("partial_received.txt", mode="wb")
+        file = open("received.txt", mode="wb")
         file.write(bytearray(data))
         file.close()
 

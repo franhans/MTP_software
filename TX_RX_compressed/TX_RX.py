@@ -32,8 +32,8 @@ def transmit():
     radio.setPayloadSize(32)
     radio.setChannel(0x60)
 
-    radio.setDataRate(NRF24.BR_2MBPS)
-    radio.setPALevel(NRF24.PA_HIGH)
+    radio.setDataRate(NRF24.BR_250KBPS)
+    radio.setPALevel(NRF24.PA_MIN)
     radio.setAutoAck(False)
     radio.enableAckPayload()
     radio.enableDynamicPayloads()
@@ -55,9 +55,12 @@ def transmit():
 
     print("Name of the text file: ", filename)
 
+    with open(filename, 'rb') as f_in:
+        with gzip.open('transmit.txt.gz', 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
     # Loads input file as an array of bytes
-    file = open('test.txt', mode='rb', buffering=0)
+    file = open('transmit.txt.gz', mode='rb', buffering=0)
     data = bytearray()
     while(True):
         d = file.read(32)
@@ -222,9 +225,16 @@ def receive():
 
                 # If the received packet is the last one, write the buffer to a file and exit
                 if last:
-                    file = open("received.txt", mode="wb")
+                    file = open("received_compressed.txt", mode="wb")
                     file.write(bytearray(data))
                     file.close()
+                    #Decompress
+                    with gzip.open('received_compressed.txt', 'rb') as f:
+                        uncompressed_sentences = f.read()
+
+                    uncompressedFile = open('received.txt', 'wb') 
+                    uncompressedFile.write(uncompressed_sentences)
+
                     last_packet = True
 
                 id_expected = (id_expected+1)%250
