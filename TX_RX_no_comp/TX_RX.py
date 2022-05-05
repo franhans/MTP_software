@@ -81,7 +81,7 @@ def transmit():
     # Data transmission
     while counter < num_packets:
 
-        dataSize = min(payload_length, size-currentPacket*payload_length)
+        dataSize = min(payload_length, size-counter*payload_length)
 
         # Check if the packet is the last one
         #packet = [int(0x00)] if (counter == (num_packets - 1)) else packet = [int(0xFF)]
@@ -98,7 +98,7 @@ def transmit():
         for i in range(payload_length): # Add the data in the payload
             # If data size is less than payload size, fill with 0
             if i < dataSize:
-                packet.append(int(data[currentPacket*payload_length+i]))
+                packet.append(int(data[counter*payload_length+i]))
             else:
                 packet.append(int(0))
 
