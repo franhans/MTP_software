@@ -32,8 +32,8 @@ def transmit():
     radio.setPayloadSize(32)
     radio.setChannel(0x60)
 
-    radio.setDataRate(NRF24.BR_250KBPS)
-    radio.setPALevel(NRF24.PA_MIN)
+    radio.setDataRate(NRF24.BR_2MBPS)
+    radio.setPALevel(NRF24.PA_HIGH)
     radio.setAutoAck(False)
     radio.enableAckPayload()
     radio.enableDynamicPayloads()
@@ -44,12 +44,14 @@ def transmit():
 
     print("Transceiver initialized")
 
+    print(radio.getCRCLength())
+
     # Start opening the file
     # Gets input file, if no fie has been specified, default file "test.txt" is used
     if len(sys.argv) > 1:
         filename = str(sys.argv[1])
     else:
-        filename = "transmit_file"
+        filename = "test.txt"
 
     print("Name of the text file: ", filename)
 
