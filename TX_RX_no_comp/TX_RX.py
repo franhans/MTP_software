@@ -125,7 +125,7 @@ def transmit():
                             retransmit = False
                             break
                             #print('---------------Received = Type')
-                time.sleep(0.005)
+                time.sleep(0.0005)
             radio.stopListening()
 	    
 
@@ -181,29 +181,27 @@ def receive():
         while (not last_packet):
             #pipe = [0]
             while not radio2.available():
-                time.sleep(0.001)
+                time.sleep(0.0001)
 
             #print('packet recived')
             packet = []
             radio2.read(packet, 32)
 
             packet_id = packet[1]
-            print("packet_id: ", packet_id)
+            #print("packet_id: ", packet_id)
 
             #Generate the ACK
             ack = bytearray(1)
             ack[0] = int(0xFF & packet_id)
             radio2.stopListening()
             radio2.write(ack)
-            time.sleep(0.001)
+            time.sleep(0.0001)
             radio2.startListening()
 
             if packet_id == id_expected : #check if tha packet is the one expected
 
                 size = packet[2] # Get the size of the data in the payload
                 #print("Size:", size)
-
-                last = True if (packet[0] == 0x00) else False # Check if the packet is the last one
 		
                 l = len(data)
 
@@ -219,7 +217,7 @@ def receive():
                     data[counter*payload_length + i] = packet[i + 3]
 
                 # If the received packet is the last one, write the buffer to a file and exit
-                if last or GPIO.input(16):
+                if GPIO.input(16) or (packet[0] == 0x00):
                     file = open("received.txt", mode="wb")
                     file.write(bytearray(data))
                     file.close()
