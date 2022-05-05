@@ -125,7 +125,7 @@ def transmit():
                             retransmit = False
                             break
                             #print('---------------Received = Type')
-                time.sleep(0.0005)
+                time.sleep(0.00001)
             radio.stopListening()
 	    
 
@@ -181,7 +181,7 @@ def receive():
         while (not last_packet):
             #pipe = [0]
             while not radio2.available():
-                time.sleep(0.0001)
+                time.sleep(0.00001)
 
             #print('packet recived')
             packet = []
@@ -195,7 +195,7 @@ def receive():
             ack[0] = int(0xFF & packet_id)
             radio2.stopListening()
             radio2.write(ack)
-            time.sleep(0.0001)
+            time.sleep(0.00001)
             radio2.startListening()
 
             if packet_id == id_expected : #check if tha packet is the one expected
