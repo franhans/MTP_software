@@ -283,19 +283,30 @@ GPIO.output(14,GPIO.LOW)
 GPIO.output(15,GPIO.LOW)
 GPIO.output(18,GPIO.LOW)
 
-while GPIO.input(16) == True:
-    time.sleep(0.1)
-
-GPIO.output(14,GPIO.HIGH)#system is ON
-print("ON")
 
 if GPIO.input(20): # If SW2 'ON' then module is TX
+
+    while GPIO.input(16) == True:
+        time.sleep(0.1)
+
+    GPIO.output(14,GPIO.HIGH)#system is ON
+    print("ON")
+
     GPIO.output(18,GPIO.HIGH)#module is RX
     print("RX")
     receive()
     os.system('./write_pen.sh received.txt')
 
 else: # If SW2 'OFF' then module is RX
+
+    os.system('./read_pen.sh test.txt')
+
+    while GPIO.input(16) == True:
+        time.sleep(0.1)
+
+    GPIO.output(14,GPIO.HIGH)#system is ON
+    print("ON")
+
     GPIO.output(15,GPIO.HIGH)#module is TX
     print("TX")
     transmit()
