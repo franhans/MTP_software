@@ -83,7 +83,7 @@ def transmit():
     timeout=0.1
 
     # Data transmission
-    while counter < num_packets or GPIO.input(16):
+    while counter < num_packets or not(GPIO.input(16)):
 
         dataSize = min(payload_length, size-counter*payload_length)
 
@@ -110,14 +110,14 @@ def transmit():
         retransmit = True
         #print("Packet ---->>>>>> ", packet)
         # Variables to control the blink of the led
-        while retransmit or GPIO.input(16):
+        while retransmit or not(GPIO.input(16)):
             #print("Retransmitting...", packet)
 
             radio.write(packet) # Send the packet
 
             t0 = time.time()
             radio.startListening()
-            while((time.time()-t0)<timeout):
+            while((time.time()-t0)<timeout or not(GPIO.input(16))):
                 if radio.available(pipes[0]):
                     ack=[]
                     ack_size = radio.getDynamicPayloadSize() #obtain the ACK length
@@ -218,7 +218,7 @@ def receive():
             radio2.startListening()
             
             led_counter = led_counter + 1
-            if  led_counter == 10000:
+            if  led_counter == 50:
                 led_counter = 0
                 if led:
                     GPIO.output(18,GPIO.HIGH)
