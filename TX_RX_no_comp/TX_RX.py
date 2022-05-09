@@ -43,6 +43,10 @@ def transmit():
     radio.openReadingPipe(1, pipes[0])
     radio.printDetails()
 
+    #Led initialize variables
+    led_counter = 0
+    led = True
+
     print("Transceiver initialized")
 
     print(radio.getCRCLength())
@@ -79,7 +83,7 @@ def transmit():
     timeout=0.1
 
     # Data transmission
-    while counter < num_packets:
+    while counter < num_packets or GPIO.input(16):
 
         dataSize = min(payload_length, size-counter*payload_length)
 
@@ -105,7 +109,8 @@ def transmit():
         # transmission of the packet and wait for the ACK
         retransmit = True
         #print("Packet ---->>>>>> ", packet)
-        while retransmit:
+        # Variables to control the blink of the led
+        while retransmit or GPIO.input(16):
             #print("Retransmitting...", packet)
 
             radio.write(packet) # Send the packet
@@ -126,8 +131,19 @@ def transmit():
                             break
                             #print('---------------Received = Type')
                 time.sleep(0.00001)
+
+
             radio.stopListening()
 	    
+            led_counter = led_counter + 1
+            if  led_counter = 10000:
+                led_counter = 0
+                if led:
+                    GPIO.output(15,GPIO.HIGH)
+                    led = False
+                else:
+                    GPIO.output(15,GPIO.LOW)
+                    led = True
 
         currentPacket = (currentPacket + 1)%250
         counter = counter + 1
@@ -175,6 +191,9 @@ def receive():
     last_packet = False
     data = [] # Array to store the whole data
 
+    #Led initialize variables
+    led_counter = 0
+    led = True
 
     radio2.startListening()
     try:
@@ -197,6 +216,17 @@ def receive():
             radio2.write(ack)
             time.sleep(0.00001)
             radio2.startListening()
+            
+            led_counter = led_counter + 1
+            if  led_counter = 10000:
+                led_counter = 0
+                if led:
+                    GPIO.output(18,GPIO.HIGH)
+                    led = False
+                else:
+                    GPIO.output(18,GPIO.LOW)
+                    led = True
+
 
             if packet_id == id_expected : #check if tha packet is the one expected
 
@@ -255,13 +285,13 @@ print("ON")
 if GPIO.input(20): # If SW2 'ON' then module is TX
     GPIO.output(18,GPIO.HIGH)#module is RX
     print("RX")
-    receive()
+    #receive()
     os.system('./write_pen.sh received.txt')
 
 else: # If SW2 'OFF' then module is RX
     GPIO.output(15,GPIO.HIGH)#module is TX
     print("TX")
-    os.system('./read_pen.sh test.txt')
+    #os.system('./read_pen.sh test.txt')
     transmit()
  # If SW1 'OFF' system reset
 
