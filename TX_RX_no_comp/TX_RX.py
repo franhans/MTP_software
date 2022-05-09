@@ -197,9 +197,9 @@ def receive():
 
     radio2.startListening()
     try:
-        while (not last_packet and not(GPIO.input(16))):
+        while (not last_packet):
             #pipe = [0]
-            while not radio2.available() and not(GPIO.input(16):
+            while not radio2.available() and not GPIO.input(16):
                 time.sleep(0.00001)
 
             #print('packet recived')
@@ -228,7 +228,7 @@ def receive():
                     led = True
 
 
-            if packet_id == id_expected : #check if tha packet is the one expected
+            if packet_id == id_expected: #check if tha packet is the one expected
 
                 size = packet[2] # Get the size of the data in the payload
                 #print("Size:", size)
@@ -255,6 +255,13 @@ def receive():
 
                 id_expected = (id_expected+1)%250
                 counter = counter+1
+
+            elif GPIO.input(16):
+                file = open("received.txt", mode="wb")
+                file.write(bytearray(data))
+                file.close()
+                last_packet = True
+
 
     except KeyboardInterrupt:
         # If the program is interrupted, write received data into file and exit
