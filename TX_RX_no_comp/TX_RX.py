@@ -268,6 +268,14 @@ def receive():
         file = open("received.txt", mode="wb")
         file.write(bytearray(data))
         file.close()
+        print("recieved")
+        # set all the leds on
+        GPIO.setmode(GPIO.BCM)
+        GPIO.output(15,GPIO.HIGH)
+        GPIO.output(14,GPIO.HIGH)
+        GPIO.output(18,GPIO.HIGH)
+        os.system('./write_pen.sh received.txt')
+        print("written")
 
     GPIO.cleanup()
 
@@ -295,10 +303,23 @@ if GPIO.input(20): # If SW2 'ON' then module is TX
     GPIO.output(18,GPIO.HIGH)#module is RX
     print("RX")
     receive()
+    print("recieved")
+    # set all the leds on
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(14, GPIO.OUT)#LED ON_OFF
+    GPIO.setup(15, GPIO.OUT)#LED TX
+    GPIO.setup(18, GPIO.OUT)#LED RX
+    GPIO.output(15,GPIO.HIGH)
+    GPIO.output(14,GPIO.HIGH)
+    GPIO.output(18,GPIO.HIGH)
     os.system('./write_pen.sh received.txt')
+    print("written")
 
 else: # If SW2 'OFF' then module is RX
 
+    GPIO.output(15,GPIO.HIGH)
+    GPIO.output(14,GPIO.HIGH)
+    GPIO.output(18,GPIO.HIGH)
     os.system('./read_pen.sh test.txt')
 
     while GPIO.input(16) == True:
@@ -307,7 +328,7 @@ else: # If SW2 'OFF' then module is RX
     GPIO.output(14,GPIO.HIGH)#system is ON
     print("ON")
 
-    GPIO.output(15,GPIO.HIGH)#module is TX
+    GPIO.output(18,GPIO.LOW)#module is TX
     print("TX")
     transmit()
  # If SW1 'OFF' system reset
