@@ -80,7 +80,7 @@ def transmit():
     num_packets = math.ceil(size/payload_length)
     currentPacket = 0
     counter=0
-    timeout=0.1
+    timeout=0.05
 
     # Data transmission
     while counter < num_packets and not(GPIO.input(16)):
@@ -147,7 +147,7 @@ def transmit():
 
         currentPacket = (currentPacket + 1)%250
         counter = counter + 1
-        progressBar(counter, num_packets)
+        #progressBar(counter, num_packets)
 
         #if counter == num_packets:
         #    break
@@ -321,6 +321,9 @@ else: # If SW2 'OFF' then module is RX
     GPIO.output(14,GPIO.HIGH)
     GPIO.output(18,GPIO.HIGH)
     os.system('./read_pen.sh test.txt')
+    GPIO.output(15,GPIO.LOW)
+    GPIO.output(14,GPIO.LOW)
+    GPIO.output(18,GPIO.LOW)
 
     while GPIO.input(16) == True:
         time.sleep(0.1)
@@ -328,7 +331,7 @@ else: # If SW2 'OFF' then module is RX
     GPIO.output(14,GPIO.HIGH)#system is ON
     print("ON")
 
-    GPIO.output(18,GPIO.LOW)#module is TX
+    GPIO.output(15,GPIO.HIGH)#module is TX
     print("TX")
     transmit()
  # If SW1 'OFF' system reset
