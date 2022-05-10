@@ -79,7 +79,7 @@ def transmit():
     size = len(data)
     #print("Size in bytes---->>>>>> ", size)
 
-    while(True and not(GPIO.input(16)):
+    while(True and not(GPIO.input(16))):
         start_time = time.time()
 
         payload_length = 29
@@ -191,20 +191,20 @@ def receive():
     radio2.stopListening()
     radio2.printDetails()
 
-    payload_length = 29
-    id_expected=0
-    counter=0 #number of received packets
-    last_packet = False
-    data = [] # Array to store the whole data
-
-    #Led initialize variables
-    led_counter = 0
-    led = True
-
-    radio2.startListening()
-
     error = True 
-    while(error):
+    while(error and not GPIO.input(16)):
+        payload_length = 29
+        id_expected=0
+        counter=0 #number of received packets
+        last_packet = False
+        data = [] # Array to store the whole data
+
+        #Led initialize variables
+        led_counter = 0
+        led = True
+
+        radio2.startListening()
+
         try:
             while (not last_packet):
                 #pipe = [0]
@@ -259,9 +259,6 @@ def receive():
                     if GPIO.input(16) or (packet[0] == 0x00):
                         last_packet = True
                         file = open("received_compressed.txt", mode="wb")
-                        print("uno")
-                        ddd
-                        print("dos")
                         file.write(bytearray(data))
                         file.close()
                         #Decompress
@@ -288,7 +285,6 @@ def receive():
             error = True
             pass
 
-        print("tres")
 
     GPIO.cleanup()
 
