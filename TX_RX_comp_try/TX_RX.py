@@ -79,7 +79,7 @@ def transmit():
     size = len(data)
     #print("Size in bytes---->>>>>> ", size)
 
-    while(True):
+    while(True and not(GPIO.input(16)):
         start_time = time.time()
 
         payload_length = 29
@@ -287,6 +287,8 @@ def receive():
             print("exception")
             error = True
             pass
+
+        print("tres")
 
     GPIO.cleanup()
 
