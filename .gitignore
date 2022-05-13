@@ -3,5 +3,6 @@
 *.pyc
 *.swo
 shared_file
+*.gz
 
 
